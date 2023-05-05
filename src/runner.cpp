@@ -3,8 +3,8 @@
 #include <omp.h>
 #include <vector>
 
-#include "../include/cpu.h"
-#include "../include/gpu.h"
+#include "../include/cpu.hpp"
+#include "../include/gpu.hpp"
 
 using namespace std;
 
