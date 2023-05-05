@@ -1,4 +1,5 @@
 # Final Project
+[Google Docs Paper](https://docs.google.com/document/d/1TDb8Q4xWwHBhfGl76xbntCk3CzSr8P6IUSqzjJBTcAM/edit?usp=sharing)
 ## Prerequisites
 - `make` to use the `Makefile`
 - `g++` and `nvcc` for compilation
