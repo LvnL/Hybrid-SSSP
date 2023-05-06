@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     cout << "done" << endl;
 
     runCPU(B, C, values, rowIndices, columnIndices, numberOfRows, 1);
-    runGPU(1, numberOfRows, rowIndices, columnIndices, values);
+    runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
 
 	return 0;
 }
