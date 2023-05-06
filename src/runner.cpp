@@ -10,14 +10,12 @@ using namespace std;
 
 int numberOfRows, numberOfColumns;
 vector<int> rowIndices, columnIndices;
-vector<float> values;
+vector<float> B, C, values;
 
-
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	ifstream inputFile(argv[1]);
 
-	cout << "Reading file " << argv[1] << "..." << flush;
+	cout << "Reading file \"" << argv[1] << "\"... " << flush;
 
 	int row, column;
     while (inputFile >> row >> column) {
@@ -30,8 +28,22 @@ int main(int argc, char* argv[])
     }
     
     cout << "done" << endl;
+    
+    cout << "Initializing matrices... " << flush;
 
-    runCPU();
+    B.clear();
+    C.clear();
+
+    for (int i = 0; i < numberOfColumns; i++)
+        B.push_back(9999999);
+    for (int i = 0; i < numberOfRows; i++)
+        C.push_back(9999999);
+
+    B[0] = 0;
+
+    cout << "done" << endl;
+
+    runCPU(B, C, values, rowIndices, columnIndices, numberOfRows, 1);
     runGPU(1, numberOfRows, rowIndices, columnIndices, values);
 
 	return 0;
