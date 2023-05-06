@@ -12,11 +12,12 @@ int numberOfRows, numberOfColumns;
 vector<int> rowIndices, columnIndices;
 vector<float> values;
 
+
 int main(int argc, char* argv[])
 {
 	ifstream inputFile(argv[1]);
 
-	cout << "Reading file... " << flush;
+	cout << "Reading file " << argv[1] << "..." << flush;
 
 	int row, column;
     while (inputFile >> row >> column) {
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
     cout << "done" << endl;
 
     runCPU();
-    runGPU();
+    runGPU(1, numberOfRows, rowIndices, columnIndices, values);
 
 	return 0;
 }
