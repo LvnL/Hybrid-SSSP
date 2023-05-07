@@ -30,12 +30,12 @@ __global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *colum
     long threadID = (long) tn;
 	int blockSize = numberOfRows / numberOfThreads;
 
-	for (int row = threadID * blockSize; row < (threadID + 1) * blockSize; row++) {
-		for (int j = rowIndices[row]; j < (row == numberOfRows - 1 ? columnIndices.size() : rowIndices[row + 1]); j++) {
-			int column = columnIndices[j];
+	for (int source = threadID * blockSize; source < (threadID + 1) * blockSize; source++) {
+		for (int j = rowIndices[source]; j < (source == numberOfRows - 1 ? columnIndices.size() : rowIndices[source + 1]); j++) {
+			int target = columnIndices[j];
 			float value = values[j];
-			if (B[column] + value < C[row]) {
-				C[row] = B[column] + value;
+			if (B[source] + value < C[target]) {
+				C[target] = B[source] + value;
 				updated = true;
 			}
 		}
