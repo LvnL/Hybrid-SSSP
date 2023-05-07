@@ -2,14 +2,15 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-
 #include "../include/cpu.hpp"
 #include "../include/gpu.hpp"
+
+#define THREAD_COUNT 8
 
 using namespace std;
 
 int numberOfRows, numberOfColumns;
-vector<int> rowIndices, columnIndices, updatedVertex, updatedVertexIndices;
+vector<int> rowIndices, columnIndices, updatedVertices, updatedVertexIndices;
 vector<float> B, C, values;
 
 bool compareRows(const vector<int>& vectorA, const vector<int>& vectorB) {
@@ -46,6 +47,7 @@ int main(int argc, char* argv[]) {
 	columnIndices.push_back(rowColumnIndices[0][1]);
     
     int offset = 0;
+    #pragma omp parallel for num_threads(THREAD_COUNT)
 	for (int i = 1; i < values.size(); i++) {
 		if (rowColumnIndices[i][0] != rowColumnIndices[i - 1][0]) {
 			for (int j = 0; j < rowColumnIndices[i][0] - rowColumnIndices[i - 1][0]; j++)
@@ -64,16 +66,20 @@ int main(int argc, char* argv[]) {
     
     cout << "Initializing paths... " << flush;
 
-    for (int i = 0; i < numberOfColumns; i++)
-        B.push_back(9999999);
-    for (int i = 0; i < numberOfRows; i++)
-        C.push_back(9999999);
-    
+    B.resize(numberOfColumns, 9999999);
+    C.resize(numberOfColumns, 9999999);
+
+    // debug arrays
+    vector<float> D, E;
+    D.resize(numberOfColumns, 9999999);
+    E.resize(numberOfColumns, 9999999);
+    D[0] = 0;
+
     cout << "done" << endl;
 
     B[0] = 0;
-    updatedVertex.resize(numberOfColumns, 0);
-    updatedVertex[0] = 1;
+    updatedVertices.resize(numberOfColumns, 0);
+    updatedVertices[0] = 1;
     updatedVertexIndices.push_back(0);
     
     // Iterate Bellman-Ford
@@ -81,18 +87,19 @@ int main(int argc, char* argv[]) {
         cout << "Iteration: " << i << endl;
         cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl;
 
-        if (updatedVertexIndices.size() < 0) { // Placeholder to test CPU code, change as needed
+        if (updatedVertices.size() < 0) { // Placeholder to test CPU code, change as needed
             cout << "    Starting GPU iteration... " << flush;
 
-            for (int i = 0; i < updatedVertex.size(); i++)
-                updatedVertex[i] = 0;
+            // reset updates vector 
+            fill(updatedVertices.begin(), updatedVertices.end(), 0);
 
-            runGPU(B, C, values, rowIndices, columnIndices, numberOfRows, updatedVertex);
+            runGPU(D, E, values, rowIndices, columnIndices, numberOfRows, updatedVertices);
+            cout << "done" << endl; // debug
 
-            // Synchronize updatedVertexIndices to match updatedVertex
+            // Synchronize updatedVertexIndices to match updatedVertices 
             updatedVertexIndices.clear();
-            for (int i = 0; i < updatedVertex.size(); i++)
-                updatedVertexIndices[i] ? updatedVertex.push_back(i) : void();
+            for (int i = 0; i < updatedVertices.size(); i++)
+                updatedVertexIndices[i] ? updatedVertices.push_back(i) : void();
         } else {
             cout << "    Starting CPU iteration... " << flush;
 
@@ -102,12 +109,14 @@ int main(int argc, char* argv[]) {
         cout << "done" << endl;
 
         swap(B, C);
+        swap(D, E);
         
         if (!updatedVertexIndices.size())
             break;
     }
     
     cout << "Shortest path to C[100]: " << C[100] << endl;
+    cout << "Shortest path to E[100]: " << E[100] << endl;
 
 	return 0;
 }

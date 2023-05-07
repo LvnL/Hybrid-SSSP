@@ -22,8 +22,6 @@ __global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *colum
 
 void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices, vector<int> &updates) {
 
-    cout << "Running iteration on GPU... " << flush;
-
     // arbitrary blocksize
     int numEdges = rowIndices.size();
     int blockSize = 256;
@@ -63,6 +61,4 @@ void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<in
     cudaFree(d_dists);
     cudaFree(d_sources);
     cudaFree(d_updates);
-
-    cout << "done" << endl;
 }
