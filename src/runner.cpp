@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < updatedVertex.size(); i++)
                 updatedVertex[i] = 0;
 
-            runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
+            runGPU(B, C, values, rowIndices, columnIndices, numberOfRows, updatedVertex);
 
             // Synchronize updatedVertexIndices to match updatedVertex
             updatedVertexIndices.clear();
