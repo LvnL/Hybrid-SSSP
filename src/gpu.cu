@@ -4,11 +4,9 @@
 
 using namespace std;
 
-__global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *columns, float *vals, float *dists, float *sources) {
+__global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *columns, float *vals, float *dists, float *sources, int *updates) {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-
-    // int update = FALSE;
 
     for (int i=t_id; i<numEdges; i+=stride) {
         int u = rows[i];
@@ -17,26 +15,21 @@ __global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *colum
 
         if (dists[v] + val < sources[u]) {
             sources[u] = dists[v] + val;
-            // update = TRUE; // non-functional for now
+            updates[u] = 1;
         }
     }
-
-    // swap sources and dists here or in main loop
-    float *tmp = dists;
-    dists = sources;
-    sources = tmp;
 }
 
-void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices) {
+void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices, vector<int> &updates) {
 
-    cout << "Begin GPU runtime..." << endl;
+    cout << "Running iteration on GPU... " << flush;
 
     // arbitrary blocksize
     int numEdges = rowIndices.size();
     int blockSize = 256;
     int numBlocks = (numEdges + blockSize - 1) / blockSize;
 
-    int *d_rows, *d_columns;
+    int *d_rows, *d_columns, *d_updates;
     float *d_vals, *d_dists, *d_sources;
 
     // intialize device array pointers
@@ -45,6 +38,7 @@ void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<in
     cudaMalloc((void **) &d_vals, values.size() * sizeof(float));
     cudaMalloc((void **) &d_dists, B.size() * sizeof(float));
     cudaMalloc((void **) &d_sources, C.size() * sizeof(float));
+    cudaMalloc((void **) &d_updates, updates.size() * sizeof(int));
 
     // load data into device 
     cudaMemcpy(d_rows, rowIndices.data(), rowIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
@@ -52,13 +46,15 @@ void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<in
     cudaMemcpy(d_vals, values.data(), values.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_dists, B.data(), B.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_sources, C.data(), C.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_updates, updates.data(), updates.size() * sizeof(int), cudaMemcpyHostToDevice);
 
     // begin iteration
-    BellmanFord<<<numBlocks, blockSize>>>(numVertices, numEdges, d_rows, d_columns, d_vals, d_dists, d_sources);
+    BellmanFord<<<numBlocks, blockSize>>>(numVertices, numEdges, d_rows, d_columns, d_vals, d_dists, d_sources, d_updates);
 
     // update host memory
     cudaMemcpy(&B, d_dists, B.size() * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(&C, d_sources, C.size() * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&updates, d_updates, updates.size() * sizeof(int), cudaMemcpyDeviceToHost);
 
     // free device memory
     cudaFree(d_rows);
@@ -66,4 +62,7 @@ void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<in
     cudaFree(d_vals);
     cudaFree(d_dists);
     cudaFree(d_sources);
+    cudaFree(d_updates);
+
+    cout << "done" << endl;
 }
