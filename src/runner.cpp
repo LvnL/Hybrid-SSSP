@@ -12,7 +12,7 @@ using namespace std;
 
 int rowCount, columnCount;
 vector<int> cpuRows, cpuColumns, gpuRows, gpuColumns, updatedVertices, updatedVertexIndices;
-vector<float> B, C, values;
+vector<int> B, C, values;
 
 bool compareRows(const vector<int>& vectorA, const vector<int>& vectorB) {
 	return vectorA[0] < vectorB[0];
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     B[0] = 0;
 
     // debug arrays
-    vector<float> D, E;
+    vector<int> D, E;
     D.resize(columnCount, 9999999);
     E.resize(columnCount, 9999999);
     D[0] = 0;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     // Iterate Bellman-Ford
     for (int i = 0; i < rowCount; i++) {
         cout << "Iteration: " << i << endl;
-        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl;
+        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (int) B.size() * 100 << "%" << endl;
 
         //if (updatedVertices.size() < 0) { // Placeholder to test CPU code, change as needed
             cout << "    Starting GPU iteration... " << flush;
