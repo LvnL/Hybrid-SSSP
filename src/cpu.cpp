@@ -5,8 +5,6 @@
 using namespace std;
 
 vector<int> runCPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, vector<int> &updatedVertexIndices, int numberOfRows, int threadCount) {
-    cout << "Running iteration on CPU... " << flush;
-
     vector<int> newUpdatedVertexIndices;
 
     #pragma omp parallel for num_threads(threadCount)
@@ -21,8 +19,6 @@ vector<int> runCPU(vector<float> &B, vector<float> &C, vector<float> &values, ve
 			}
 		}
 	}
-
-    cout << "done" << endl;
 
     return newUpdatedVertexIndices;
 }

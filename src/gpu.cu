@@ -28,9 +28,6 @@ __global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *colum
 }
 
 void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices) {
-
-    cout << "Begin GPU runtime..." << endl;
-
     // arbitrary blocksize
     int numEdges = rowIndices.size();
     int blockSize = 256;

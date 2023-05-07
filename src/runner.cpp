@@ -82,6 +82,8 @@ int main(int argc, char* argv[]) {
         cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl;
 
         if (updatedVertexIndices.size() < 0) { // Placeholder to test CPU code, change as needed
+            cout << "    Starting GPU iteration... " << flush;
+
             runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
 
             // Synchronize updatedVertexIndices to match updatedVertex
@@ -89,6 +91,8 @@ int main(int argc, char* argv[]) {
             for (int i = 0; i < updatedVertex.size(); i++)
                 updatedVertexIndices[i] ? updatedVertex.push_back(i) : void();
         } else {
+            cout << "    Starting CPU iteration... " << flush;
+
             updatedVertexIndices = runCPU(B, C, values, rowIndices, columnIndices, updatedVertexIndices, numberOfRows, 1);
 
             // Synchronize updatedVertex to match updatedVertexIndices
@@ -99,13 +103,15 @@ int main(int argc, char* argv[]) {
                 updatedVertex[updatedVertexIndices[i]] = 1;
         }
 
+        cout << "done" << endl;
+
         swap(B, C);
         
-        cout << "    Shortest path to C[100]: " << C[100] << endl;
-
         if (!updatedVertexIndices.size())
             break;
     }
     
+    cout << "Shortest path to C[100]: " << C[100] << endl;
+
 	return 0;
 }
