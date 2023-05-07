@@ -1,31 +1,30 @@
 #include <iostream>
+#include <omp.h>
 #include <vector>
 
 using namespace std;
 
-bool updated;
-
-void runCPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numberOfRows, int threadCount) {
+vector<int> runCPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, vector<int> &updatedVertexIndices, int threadCount) {
     cout << "Running iteration on CPU... " << flush;
 
-    for (int i = 0; i < numberOfRows; i++) {
-        updated = false;
+    vector<int> newUpdatedVertexIndices;
 
-        for (int j = 0; j < numberOfRows; j++){
-                int row = rowIndices[j];
-                int column = columnIndices[j];
+    #pragma omp parallel for num_threads(8)
+    for (int i = 0; i < updatedVertexIndices.size(); i++) {
+        int source = updatedVertexIndices[i];
+        for (int j = 0; j < values.size(); j++) { // Inefficiency caused by using COO instead of CSR
+            if (rowIndices[j] == source) {
+                int target = columnIndices[j];
                 float value = values[j];
-                if (B[column] + value < C[row]) {
-                    C[row] = B[column] + value;
-                    updated = true;
+                if (B[source] + value < C[target]) {
+                    C[target] = B[source] + value;
+                    newUpdatedVertexIndices.push_back(target);
                 }
+            }
         }
-
-        if (!updated) break;
-        swap(B, C);
     }
 
     cout << "done" << endl;
 
-    return;
+    return newUpdatedVertexIndices;
 }

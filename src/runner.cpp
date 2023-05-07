@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <omp.h>
 #include <vector>
 
 #include "../include/cpu.hpp"
@@ -9,7 +8,7 @@
 using namespace std;
 
 int numberOfRows, numberOfColumns;
-vector<int> rowIndices, columnIndices;
+vector<int> rowIndices, columnIndices, updatedVertex, updatedVertexIndices;
 vector<float> B, C, values;
 
 int main(int argc, char* argv[]) {
@@ -31,20 +30,43 @@ int main(int argc, char* argv[]) {
     
     cout << "Initializing matrices... " << flush;
 
-    B.clear();
-    C.clear();
-
     for (int i = 0; i < numberOfColumns; i++)
         B.push_back(9999999);
     for (int i = 0; i < numberOfRows; i++)
         C.push_back(9999999);
-
-    B[0] = 0;
-
+    
     cout << "done" << endl;
 
-    runCPU(B, C, values, rowIndices, columnIndices, numberOfRows, 1);
-    runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
+    B[0] = 0;
+    updatedVertex.resize(numberOfColumns, 0);
+    updatedVertex[0] = 1;
+    updatedVertexIndices.push_back(0);
+    
+    // Iterate Bellman-Ford
+    for (int i = 0; i < numberOfRows; i++) {
+        cout << "Iteration: " << i << endl;
+        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl << "    ";
 
+        if (updatedVertexIndices.size() < 0) { // Placeholder to test CPU code, change as needed
+            runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
+
+            // Synchronize updatedVertexIndices to match updatedVertex
+            updatedVertexIndices.clear();
+            for (int i = 0; i < updatedVertex.size(); i++)
+                updatedVertexIndices[i] ? updatedVertex.push_back(i) : void();
+        } else {
+            updatedVertexIndices = runCPU(B, C, values, rowIndices, columnIndices, updatedVertexIndices, 1);
+
+            // Synchronize updatedVertex to match updatedVertexIndices
+            for (int i = 0; i < updatedVertex.size(); i++)
+                updatedVertex[i] = 0;
+
+            for (int i = 0; i < updatedVertexIndices.size(); i++)
+                updatedVertex[updatedVertexIndices[i]] = 1;
+        }
+
+        swap(B, C);
+    }
+    
 	return 0;
 }
