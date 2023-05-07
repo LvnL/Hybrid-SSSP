@@ -84,6 +84,9 @@ int main(int argc, char* argv[]) {
         if (updatedVertexIndices.size() < 0) { // Placeholder to test CPU code, change as needed
             cout << "    Starting GPU iteration... " << flush;
 
+            for (int i = 0; i < updatedVertex.size(); i++)
+                updatedVertex[i] = 0;
+
             runGPU(B, C, values, rowIndices, columnIndices, numberOfRows);
 
             // Synchronize updatedVertexIndices to match updatedVertex
@@ -94,13 +97,6 @@ int main(int argc, char* argv[]) {
             cout << "    Starting CPU iteration... " << flush;
 
             updatedVertexIndices = runCPU(B, C, values, rowIndices, columnIndices, updatedVertexIndices, numberOfRows, 1);
-
-            // Synchronize updatedVertex to match updatedVertexIndices
-            for (int i = 0; i < updatedVertex.size(); i++)
-                updatedVertex[i] = 0;
-
-            for (int i = 0; i < updatedVertexIndices.size(); i++)
-                updatedVertex[updatedVertexIndices[i]] = 1;
         }
 
         cout << "done" << endl;
