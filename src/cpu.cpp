@@ -1,31 +1,24 @@
 #include <iostream>
+#include <omp.h>
 #include <vector>
 
 using namespace std;
 
-bool updated;
+vector<int> runCPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, vector<int> &updatedVertexIndices, int numberOfRows, int threadCount) {
+    vector<int> newUpdatedVertexIndices;
 
-void runCPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numberOfRows, int threadCount) {
-    cout << "Running iteration on CPU... " << flush;
+    #pragma omp parallel for num_threads(threadCount)
+    for (int i = 0; i < updatedVertexIndices.size(); i++) {
+        int source = updatedVertexIndices[i];
+		for (int j = rowIndices[source]; j < (source == numberOfRows - 1 ? columnIndices.size() : rowIndices[source + 1]); j++) {
+			int target = columnIndices[j];
+			float value = values[j];
+			if (B[source] + value < C[target]) {
+				C[target] = B[source] + value;
+				newUpdatedVertexIndices.push_back(target);
+			}
+		}
+	}
 
-    for (int i = 0; i < numberOfRows; i++) {
-        updated = false;
-
-        for (int j = 0; j < numberOfRows; j++){
-                int row = rowIndices[j];
-                int column = columnIndices[j];
-                float value = values[j];
-                if (B[column] + value < C[row]) {
-                    C[row] = B[column] + value;
-                    updated = true;
-                }
-        }
-
-        if (!updated) break;
-        swap(B, C);
-    }
-
-    cout << "done" << endl;
-
-    return;
+    return newUpdatedVertexIndices;
 }
