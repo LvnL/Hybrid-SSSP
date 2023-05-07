@@ -25,6 +25,22 @@ __global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *colum
     float *tmp = dists;
     dists = sources;
     sources = tmp;
+
+    /*
+    long threadID = (long) tn;
+	int blockSize = numberOfRows / numberOfThreads;
+
+	for (int source = threadID * blockSize; source < (threadID + 1) * blockSize; source++) {
+		for (int j = rowIndices[source]; j < (source == numberOfRows - 1 ? columnIndices.size() : rowIndices[source + 1]); j++) {
+			int target = columnIndices[j];
+			float value = values[j];
+			if (B[source] + value < C[target]) {
+				C[target] = B[source] + value;
+				updated = true;
+			}
+		}
+	}
+    */
 }
 
 void runGPU(vector<float> &B, vector<float> &C, vector<float> &values, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices) {
