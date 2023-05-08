@@ -4,59 +4,51 @@
 
 using namespace std;
 
-__global__ void BellmanFord(int numVertices, int numEdges, int *rows, int *columns, int *dists, int *sources, int *updates) {
-    int t_id = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void BellmanFord(int *B, int *C, int *rowIndices, int* columnIndices, int *updatedVertices, int edgeCount) {
+    int threadID = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    for (int i=t_id; i<numEdges; i+=stride) {
-        int u = rows[i];
-        int v = columns[i];
+    for (int i = threadID; i < edgeCount; i += stride) {
+        int source = rowIndices[i];
+        int target = columnIndices[i];
 
-        if (dists[v] + 1 < sources[u]) {
-            atomicMin(&sources[u], dists[v] + 1);
-            atomicMax(&updates[u], 1);
-            // sources[u] = dists[v] + 1;
-            // updates[u] = 1;
+        if (B[source] + 1 < C[target]) {
+            atomicMin(&C[target], B[source] + 1);
+            updatedVertices[target] = 1;
         }
     }
 }
 
-void runGPU(vector<int> &B, vector<int> &C, vector<int> &rowIndices, vector<int> &columnIndices, int numVertices, vector<int> &updates) {
+void runGPU(vector<int> &B, vector<int> &C, vector<int> &rowIndices, vector<int> &columnIndices, vector<int> &updatedVertices) {
 
     // arbitrary blocksize
-    int numEdges = rowIndices.size();
+    int edgeCount = rowIndices.size();
     int blockSize = 256;
-    int numBlocks = (numEdges + blockSize - 1) / blockSize;
+    int numBlocks = (edgeCount + blockSize - 1) / blockSize;
 
-    int *d_rows, *d_columns, *d_updates;
-    int *d_dists, *d_sources;
+    int *deviceB, *deviceC, *deviceRowIndices, *deviceColumnIndices, *deviceUpdatedVertices;
 
-    // intialize device array pointers
-    cudaMalloc((void **) &d_rows, rowIndices.size() * sizeof(int));
-    cudaMalloc((void **) &d_columns, columnIndices.size() * sizeof(int));
-    cudaMalloc((void **) &d_dists, B.size() * sizeof(int));
-    cudaMalloc((void **) &d_sources, C.size() * sizeof(int));
-    cudaMalloc((void **) &d_updates, updates.size() * sizeof(int));
+    cudaMalloc((void **) &deviceB, B.size() * sizeof(int));
+    cudaMalloc((void **) &deviceC, C.size() * sizeof(int));
+    cudaMalloc((void **) &deviceRowIndices, rowIndices.size() * sizeof(int));
+    cudaMalloc((void **) &deviceColumnIndices, columnIndices.size() * sizeof(int));
+    cudaMalloc((void **) &deviceUpdatedVertices, updatedVertices.size() * sizeof(int));
 
-    // load data into device 
-    cudaMemcpy(d_rows, rowIndices.data(), rowIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_columns, columnIndices.data(), columnIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_dists, B.data(), B.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_sources, C.data(), C.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_updates, updates.data(), updates.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceB, B.data(), B.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceC, C.data(), C.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceRowIndices, rowIndices.data(), rowIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceColumnIndices, columnIndices.data(), columnIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(deviceUpdatedVertices, updatedVertices.data(), updatedVertices.size() * sizeof(int), cudaMemcpyHostToDevice);
+    
+    BellmanFord<<<numBlocks, blockSize>>>(deviceB, deviceC, deviceRowIndices, deviceColumnIndices, deviceUpdatedVertices, edgeCount);
 
-    // begin iteration
-    BellmanFord<<<numBlocks, blockSize>>>(numVertices, numEdges, d_rows, d_columns, d_dists, d_sources, d_updates);
+    cudaMemcpy(B.data(), deviceB, B.size() * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C.data(), deviceC, C.size() * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(updatedVertices.data(), deviceUpdatedVertices, updatedVertices.size() * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // update host memory
-    cudaMemcpy(&B, d_dists, B.size() * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&C, d_sources, C.size() * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&updates, d_updates, updates.size() * sizeof(int), cudaMemcpyDeviceToHost);
-
-    // free device memory
-    cudaFree(d_rows);
-    cudaFree(d_columns);
-    cudaFree(d_dists);
-    cudaFree(d_sources);
-    cudaFree(d_updates);
+    cudaFree(deviceB);
+    cudaFree(deviceC);
+    cudaFree(deviceRowIndices);
+    cudaFree(deviceColumnIndices);
+    cudaFree(deviceUpdatedVertices);
 }

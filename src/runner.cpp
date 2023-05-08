@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	cpuColumns.push_back(cooEdges[0][1]);
     
     int offset = 0;
-    #pragma omp parallel for num_threads(THREAD_COUNT)
+    // #pragma omp parallel for num_threads(THREAD_COUNT)
 	for (int i = 1; i < values.size(); i++) {
 		if (cooEdges[i][0] != cooEdges[i - 1][0]) {
 			for (int j = 0; j < cooEdges[i][0] - cooEdges[i - 1][0]; j++)
@@ -91,17 +91,27 @@ int main(int argc, char* argv[]) {
     updatedVertexIndices.push_back(0);
     
     // Iterate Bellman-Ford
-    for (int i = 0; i < rowCount; i++) {
+    for (int i = 0; i < 1; i++) {
         cout << "Iteration: " << i << endl;
         cout << "    Vertices being processed: " << updatedVertexIndices.size() / (int) B.size() * 100 << "%" << endl;
 
         //if (updatedVertices.size() < 0) { // Placeholder to test CPU code, change as needed
             cout << "    Starting GPU iteration... " << flush;
 
-            // reset updates vector 
-            fill(updatedVertices.begin(), updatedVertices.end(), 0);
+            // Reset updates vector 
+            //fill(updatedVertices.begin(), updatedVertices.end(), 0);
 
-            runGPU(D, E, gpuRows, gpuColumns, rowCount, updatedVertices);
+            runGPU(D, E, gpuRows, gpuColumns, updatedVertices);
+
+            //for (int i = 0; i < gpuRows.size(); i++) {
+            //    if (gpuRows[i] == 0)
+            //        cout << " " << gpuRows[i] << " " << gpuColumns[i] << endl;
+            //}
+            
+            for (int i = 0; i < updatedVertices.size(); i++) {
+                if (updatedVertices[i] == 1)
+                    cout << " " << i << " " << endl;
+            }
 
             cout << "done" << endl; // debug
 
@@ -115,6 +125,10 @@ int main(int argc, char* argv[]) {
 
             updatedVertexIndices = runCPU(B, C, values, cpuRows, cpuColumns, updatedVertexIndices, rowCount, 1);
         //}
+
+        cout << "Shortest path to C[100]: " << C[100] << endl;
+        cout << "Shortest path to E[100] (GPU): " << E[100] << endl;
+
 
         cout << "done" << endl;
 
