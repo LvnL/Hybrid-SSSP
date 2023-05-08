@@ -19,10 +19,10 @@ __global__ void BellmanFord(int *B, int *C, int *rows, int* columns, int *update
     }
 }
 
-void runGPU(vector<int> &B, vector<int> &C, vector<int> &rows, vector<int> &columns, vector<int> &updatedVertices, int vertexCount) {
+void runGPU(vector<int> &B, vector<int> &C, vector<int> &rows, vector<int> &columns, vector<int> &updatedVertices) {
     // arbitrary blocksize
     int blockSize = 256;
-    int numBlocks = (vertexCount + blockSize - 1) / blockSize;
+    int numBlocks = (rows.size() + blockSize - 1) / blockSize;
 
     int *deviceB, *deviceC, *deviceRows, *deviceColumns, *deviceUpdatedVertices;
 
@@ -41,7 +41,7 @@ void runGPU(vector<int> &B, vector<int> &C, vector<int> &rows, vector<int> &colu
     cudaMemcpy(deviceUpdatedVertices, updatedVertices.data(), updatedVertices.size() * sizeof(int), cudaMemcpyHostToDevice);
     
     // begin iteration via kernel
-    BellmanFord<<<numBlocks, blockSize>>>(deviceB, deviceC, deviceRows, deviceColumns, deviceUpdatedVertices, vertexCount);
+    BellmanFord<<<numBlocks, blockSize>>>(deviceB, deviceC, deviceRows, deviceColumns, deviceUpdatedVertices, rows.size());
 
     // update host memory
     cudaMemcpy(B.data(), deviceB, B.size() * sizeof(int), cudaMemcpyDeviceToHost);

@@ -5,6 +5,6 @@
 
 using namespace std;
 
-void runGPU(vector<int> &B, vector<int> &C, vector<int> &rows, vector<int> &columns, vector<int> &updatest, int vertexCount);
+void runGPU(vector<int> &B, vector<int> &C, vector<int> &rows, vector<int> &columns, vector<int> &updatest);
 
 #endif

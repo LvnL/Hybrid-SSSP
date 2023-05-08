@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -78,14 +79,6 @@ int main(int argc, char* argv[]) {
     C.resize(vertexCount, 9999999);
     B[0] = 0;
 
-    cout << vertexCount << endl;
-
-    // debug arrays
-    vector<int> D, E;
-    D.resize(vertexCount, 9999999);
-    E.resize(vertexCount, 9999999);
-    D[0] = 0;
-
     cout << "done" << endl;
 
     // initialize updates vector 
@@ -96,33 +89,45 @@ int main(int argc, char* argv[]) {
     // Iterate Bellman-Ford
     for (int i = 0; i < vertexCount; i++) {
         cout << "Iteration: " << i << endl;
-        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl;
 
-        //if (updatedVertices.size() < 0) { // Placeholder to test CPU code, change as needed
-            cout << "    Starting GPU iteration... " << flush;
+        //if (true) {
+        if ((updatedVertexIndices.size() / (float) vertexCount * 100) > 5.) {
+            cout << "    Starting GPU iteration... " << endl;
+
+            auto start_time = std::chrono::high_resolution_clock::now();
 
             // Reset updates vector 
             fill(updatedVertices.begin(), updatedVertices.end(), 0);
 
-            runGPU(D, E, gpuRows, gpuColumns, updatedVertices, vertexCount);
-
-            cout << "done" << endl; // debug
+            runGPU(B, C, gpuRows, gpuColumns, updatedVertices);
 
             // Synchronize updatedVertexIndices to match updatedVertices 
-            // updatedVertexIndices.clear();
-            // for (int i = 0; i < updatedVertices.size(); i++) {
-            //     updatedVertexIndices[i] ? updatedVertices.push_back(i) : void();
-            // }
-        //} else {
-            cout << "    Starting CPU iteration... " << flush;
+            updatedVertexIndices.clear();
+            for (int i = 0; i < updatedVertices.size(); i++) {
+                if (updatedVertices[i])
+                    updatedVertexIndices.push_back(i);
+            }
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+
+            cout << "    GPU time taken: " << duration.count() << " microseconds" << endl;
+        } else {
+            cout << "    Starting CPU iteration... " << endl;
+
+            auto start_time = std::chrono::high_resolution_clock::now();
 
             updatedVertexIndices = runCPU(B, C, values, cpuRows, cpuColumns, updatedVertexIndices, vertexCount, 1);
-        //}
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+   
+            std::cout << "    CPU time taken: " << duration.count() << " microseconds" << endl;
+        }
         
         cout << "done" << endl;
 
         swap(B, C);
-        swap(D, E);
         
         if (!updatedVertexIndices.size()) {
             break;
@@ -130,7 +135,6 @@ int main(int argc, char* argv[]) {
     }
     
     cout << "Shortest path to C[100]: " << C[100] << endl;
-    cout << "Shortest path to E[100] (GPU): " << E[100] << endl;
 
 	return 0;
 }
