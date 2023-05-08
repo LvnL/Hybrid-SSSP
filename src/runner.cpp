@@ -10,7 +10,7 @@
 
 using namespace std;
 
-int rowCount, columnCount;
+int rowCount, columnCount, vertexCount;
 vector<int> cpuRows, cpuColumns, gpuRows, gpuColumns, updatedVertices, updatedVertexIndices, B, C, values;
 
 bool compareRows(const vector<int>& vectorA, const vector<int>& vectorB) {
@@ -34,7 +34,9 @@ int main(int argc, char* argv[]) {
 
 		if (row > rowCount) rowCount = row;
         if (column > columnCount) columnCount = column;
-    }	
+    }
+
+    vertexCount = max(rowCount, columnCount);
 
     cout << "done" << endl;
 
@@ -72,45 +74,37 @@ int main(int argc, char* argv[]) {
     // initialize source and destination vectors
     cout << "Initializing paths... " << flush;
 
-    B.resize(columnCount, 9999999);
-    C.resize(columnCount, 9999999);
+    B.resize(vertexCount, 9999999);
+    C.resize(vertexCount, 9999999);
     B[0] = 0;
+
+    cout << vertexCount << endl;
 
     // debug arrays
     vector<int> D, E;
-    D.resize(columnCount, 9999999);
-    E.resize(columnCount, 9999999);
+    D.resize(vertexCount, 9999999);
+    E.resize(vertexCount, 9999999);
     D[0] = 0;
 
     cout << "done" << endl;
 
     // initialize updates vector 
-    updatedVertices.resize(columnCount, 0);
+    updatedVertices.resize(vertexCount, 0);
     updatedVertices[0] = 1;
     updatedVertexIndices.push_back(0);
     
     // Iterate Bellman-Ford
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < vertexCount; i++) {
         cout << "Iteration: " << i << endl;
-        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (int) B.size() * 100 << "%" << endl;
+        cout << "    Vertices being processed: " << updatedVertexIndices.size() / (float) B.size() * 100 << "%" << endl;
 
         //if (updatedVertices.size() < 0) { // Placeholder to test CPU code, change as needed
             cout << "    Starting GPU iteration... " << flush;
 
             // Reset updates vector 
-            //fill(updatedVertices.begin(), updatedVertices.end(), 0);
+            fill(updatedVertices.begin(), updatedVertices.end(), 0);
 
             runGPU(D, E, gpuRows, gpuColumns, updatedVertices);
-
-            //for (int i = 0; i < gpuRows.size(); i++) {
-            //    if (gpuRows[i] == 0)
-            //        cout << " " << gpuRows[i] << " " << gpuColumns[i] << endl;
-            //}
-            
-            for (int i = 0; i < updatedVertices.size(); i++) {
-                if (updatedVertices[i] == 1)
-                    cout << " " << i << " " << endl;
-            }
 
             cout << "done" << endl; // debug
 
@@ -122,13 +116,9 @@ int main(int argc, char* argv[]) {
         //} else {
             cout << "    Starting CPU iteration... " << flush;
 
-            updatedVertexIndices = runCPU(B, C, values, cpuRows, cpuColumns, updatedVertexIndices, rowCount, 1);
+            updatedVertexIndices = runCPU(B, C, values, cpuRows, cpuColumns, updatedVertexIndices, vertexCount, 1);
         //}
-
-        cout << "Shortest path to C[100]: " << C[100] << endl;
-        cout << "Shortest path to E[100] (GPU): " << E[100] << endl;
-
-
+        
         cout << "done" << endl;
 
         swap(B, C);
