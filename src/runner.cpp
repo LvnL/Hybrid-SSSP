@@ -11,8 +11,7 @@
 using namespace std;
 
 int rowCount, columnCount;
-vector<int> cpuRows, cpuColumns, gpuRows, gpuColumns, updatedVertices, updatedVertexIndices;
-vector<int> B, C, values;
+vector<int> cpuRows, cpuColumns, gpuRows, gpuColumns, updatedVertices, updatedVertexIndices, B, C, values;
 
 bool compareRows(const vector<int>& vectorA, const vector<int>& vectorB) {
 	return vectorA[0] < vectorB[0];

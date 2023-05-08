@@ -28,8 +28,7 @@ void runGPU(vector<int> &B, vector<int> &C, vector<int> &rowIndices, vector<int>
     int blockSize = 256;
     int numBlocks = (numEdges + blockSize - 1) / blockSize;
 
-    int *d_rows, *d_columns, *d_updates;
-    int *d_dists, *d_sources;
+    int *d_rows, *d_columns, *d_updates, *d_dists, *d_sources;
 
     // intialize device array pointers
     cudaMalloc((void **) &d_rows, rowIndices.size() * sizeof(int));
