@@ -1,5 +1,5 @@
-# Final Project
-[Google Docs Paper](https://docs.google.com/document/d/1TDb8Q4xWwHBhfGl76xbntCk3CzSr8P6IUSqzjJBTcAM/edit?usp=sharing)
+# Hybrid-SSSP
+This project combines the advantages that CPUs and GPUs have for graph processing. The Bellman-Ford algorithm is used with selection of CPU or GPU being done on a per iteration basis. Both the CSR and COO formats are used to implement efficient processing for the CPU and GPU, respectively. The project was inspired by [Garaph](https://www.usenix.org/system/files/conference/atc17/atc17-ma.pdf) and was developed as part of [CS:4700 - High Performance & Parallel Computing](https://myui.uiowa.edu/my-ui/courses/details.page?ci=158677&id=990815)
 ## Prerequisites
 - `make` to use the `Makefile`
 - `g++` and `nvcc` for compilation
