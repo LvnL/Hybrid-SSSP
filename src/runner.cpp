@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
             // Reset updates vector 
             fill(updatedVertices.begin(), updatedVertices.end(), 0);
 
-            runGPU(D, E, gpuRows, gpuColumns, updatedVertices);
+            runGPU(D, E, gpuRows, gpuColumns, updatedVertices, vertexCount);
 
             cout << "done" << endl; // debug
 
